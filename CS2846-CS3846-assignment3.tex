@@ -1,0 +1,263 @@
+\documentclass[a4,12pt]{article}
+%\documentclass[notitlepage,a4wide,10pt]{report}
+
+\usepackage{color, graphicx, parskip, float}
+\usepackage[shortlabels]{enumitem}
+\usepackage[left=3cm,top=3cm,right=3cm]{geometry}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks   = true, %Colours links instead of ugly boxes
+  urlcolor     = red, %Colour for external hyperlinks
+  linkcolor    = blue, %Colour of internal links
+  citecolor   = blue %Colour of citations, could be ``red''
+}
+
+
+\setlength{\parindent}{0cm}
+
+% change sections spacings
+\usepackage[compact]{titlesec}
+\titlespacing{\section}{0pt}{1em}{*0}
+\titlespacing{\subsection}{0pt}{0.5em}{*0}
+\titlespacing{\subsubsection}{0pt}{0.5em}{*0}
+
+% puts a dot after the section numbers
+%\titlelabel{\thetitle.\quad}
+
+\usepackage{fontspec}
+
+\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
+\setromanfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont[Scale=0.85]{Courier New}
+\setmainfont{Arial}
+
+% test this for sizes...
+%\renewcommand{\familydefault}{\sfdefault}
+
+
+\definecolor{myGray}{rgb}{0.5,0.5,0.5}
+\definecolor{lightGray}{rgb}{0.95,0.95,0.95}
+
+
+\begin{document}
+
+\pagestyle{plain}
+
+\begin{center}
+
+{\large \bf  CS2846/CS3846}\\
+\vskip1em
+{\LARGE \bf Group Project II}
+
+
+\vskip2em
+
+
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{rl}
+	{\color{myGray} Due date:} & March 17\textsuperscript{th} at 12pm (noon)\\
+	{\color{myGray} Submission method:} & Moodle submission\\
+	{\color{myGray} Feedback:} & April 24\textsuperscript{th}\\
+	{\color{myGray} Weight:} & 20\% of your final mark
+\end{tabular}
+
+\end{center}
+
+\vskip3em
+
+
+\section*{Learning outcomes assessed}
+This project assesses the following HCI topics:
+\begin{itemize}[-, noitemsep, topsep=-0.5em]
+	\item interaction redesign;
+	\item basic graphic design;
+	\item prototype coding using Web technologies;
+	\item UI testing.
+\end{itemize}
+
+
+\section*{Instructions}
+ You will need to submit this coursework via Moodle (only one submission per group). Log onto the course page where you will find the relevant link for this assignment. Click on the link and follow the instructions.
+
+You will submit a ZIP file with the following contents:
+\begin{enumerate}[1., noitemsep, topsep=-0.5em]
+	\item a PDF file consisting of a report as indicated below;
+	\item a folder with the application, including both the code and a readme.txt file with instructions on how to set it up and how to use it;
+	\item a CSV file with the test data;
+	\item a statement of relative contributions signed by all the team members.
+
+\end{enumerate}
+
+
+%
+%
+%\section*{Marking criteria} 
+%
+%Details on marking criteria are presented at the end of this document. 
+%You will be required to discuss your project individually.
+%, and will get 
+%XXXXXXXXXX Each project will be discussed, and 
+Written feedback will be provided.
+
+\vskip2.4em
+
+\setlength{\fboxsep}{1.2em}
+\begin{center}
+	\colorbox{lightGray}{
+		\begin{minipage}{9cm}
+          All the work you submit should be solely your own work.\\
+          Coursework submissions are routinely checked for this.\\ 
+          Failure to comply will result in sanctions.
+		\end{minipage}     
+	}
+\end{center}
+\newpage
+
+\section{Introduction}
+
+You will be building a working version of a prototype for the Document Management System (DMS) application, based on the low fidelity prototype you produced for Group Project I, and of course taking into account the specific and general feedback you received.
+
+\section{Overview of the DMS application}
+
+The application you will produce must be a Web-based interface that emulates some of the features of the DMS application through a local API.
+
+The starting project -- that you can download \href{https://moodle.royalholloway.ac.uk/mod/resource/view.php?id=233760}{here} -- has, in its root directory, a file \verb+index.html+ with a mockup template that shows how to use the API. The file \verb+index.html+ also loads all the CSS and, most importantly, the JavaScript with the definition of the API. You will not have to change these files, but if you find a bug that you can fix, feel free to do so and let us know.
+
+The API is accessible primarily through three classes and through the object \verb+DMS+. These are described in the subsections below.
+
+\subsection*{Classes}
+
+\begin{enumerate}[- , noitemsep, topsep=-0.5em]
+
+\item \verb+Callback+: specifies a function to be called repeatedly for all objects in the database;
+  two of its methods are particularly useful:
+  \begin{itemize}[-, noitemsep]
+  \item \verb+setCallback(fn)+: specifies the callback;
+  \item \verb+addFilter(filter)+: adds a filter (a Boolean-valued function) so that the callback is applied only to some of the objects in the database.
+  \end{itemize}
+  
+\item \verb+Document+: specifies a document, with all the usual getter and setter methods (\verb+getName()+, \verb+setDescription(...)+, \verb+getCreationDate()+, etc.).
+  The document owners and the tags are stored as \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set}{Sets}; for this reason, the methods \verb+ownersToList()+, \verb+ownersToString()+, \verb+tagsToList()+, and \verb+tagsToString()+ have been implemented to provide list and string representations of the collections of owners and of tags.
+  The comments and the document history are provided by \verb+getComments()+ and \verb+getHistory()+; these methods return lists of comments and events, respectively, which are in turn objects with the following structure:
+  \begin{center}
+    \begin{tabular}{lll}
+      \verb+(Comment).user+ && \verb+(Event).description+
+      \\
+      \verb+(Comment).text+ && \verb+(Event).date+
+      \\
+      \verb+(Comment).date+ & \hspace{3em} &
+      \\
+    \end{tabular}
+  \end{center}
+
+\item \verb+Tag+: specifies a tag, with getter and setter methods as mentioned above.
+
+\end{enumerate}
+
+\subsection*{DMS methods}
+
+{\em Note that the variables \verb+doc+, \verb+tag+, and \verb+callback+ usually correspond to objects of type \verb+Document+, \verb+Tag+, and \verb+Callback+.}
+
+\smallskip
+
+\begin{enumerate}[- , noitemsep, topsep=-0.5em]
+\item \verb+loggedIn()+: checks if a user is currently logged in;
+\item \verb+logIn(user)+, \verb+logOut()+: logs in/out a given user;
+\item \verb+getUserName()+: returns the name of the user that is currently logged in;
+\item \verb+canEdit(object)+: checks if the current user can edit a given object (document or tag);
+\item \verb+uploadDocument(name, file, owners, description, tagNames, priv)+: uploads, and returns, a new document with the given characteristics;
+\item \verb+updateDocument(doc)+: updates a given document; the history of the document is uploaded automatically;
+\item \verb+forEachDocument(callback)+: executes a callback for each document in the database;
+\item \verb+createTag(name, owners, description)+: creates a new tag with the given characteristics;
+\item \verb+updateTag(tag)+: updates a given tag (the name of the tag cannot be changed using this method; instead, the method \verb+mapTag+ should be used);
+\item \verb+deleteTag(tag)+: removes the tag from the database (if it is not attached to any document);
+\item \verb+forEachTag(callback)+: executes a callback for each tag in the database;
+\item \verb+mapTag(tag, newTagName)+: renames the tag, and updates all documents accordingly;
+\item \verb+createComment(text)+: generates a new comment (to be attached to a document) with the given text;
+\item \verb+clearStores()+: removes all documents and all tags from the database.
+\end{enumerate}
+
+\subsection*{Functions}
+
+Two auxiliary functions may also prove to be useful:
+\begin{enumerate}[- , noitemsep, topsep=-0.5em]
+\item \verb+parseCSV(values)+: parses a list of comma-separated values (e.g. tag names) stored in the string \verb+values+;
+\item \verb+extractTagNames(description)+: compiles a list of tag names from the description of the document.
+\end{enumerate}
+
+\section{Your work}
+
+\subsection{Building the prototype}
+
+In this coursework assignment, each group is required to build a working version of the UI for the DMS application by following the steps below.
+
+\begin{enumerate}[noitemsep]
+\item {\bf Redesign.} According to the received feedback, you will redesign the concept of your UI. This does not mean that you have to follow all the suggestions, but rather that you should work on the important issues and come up with your own solutions.
+\item {\bf Graphic design.} You will follow the basic concepts of graphical design from the lectures to design the look of the UI.
+\item {\bf Code.} Using HTML, CSS, JavaScript/jQuery, and any other tools that you will find suitable (e.g. Sass or CoffeeScript), you will write the code for the UI. You may revise the design in order to simplify the code if necessary. Make sure that you keep it simple in order to have a working prototype on schedule.
+\end{enumerate}
+
+\medskip
+
+The prototype will also be evaluated with respect to some additional characteristics, namely:
+
+\begin{enumerate}[-, noitemsep]
+\item ease of use and early engagement;
+\item look and feel;
+\item responsiveness to different screen sizes;
+\item adaptability to several modalities of interaction;
+\item readability of the code;
+\item flexibility of the code to adapt to small changes of the UI.
+\end{enumerate}
+
+\subsection{Testing}
+
+You will test one major aspect of your UI with at least 20 external users. The suite of tests can include time measurements, A/B testing, etc. \emph{The actual tests will need to be agreed with the course lecturers on a per-group basis in one lab session that will be announced in advance.}
+%Before you conduct the test, you will discuss the suite of tests with the lecturers in one lab session.
+
+\subsection{Report}
+The report consists of two sections:
+\begin{enumerate}[noitemsep]
+\item {\bf Redesign process.} 
+You will briefly describe the redesign process, namely the choices you have made and the doubts you still have, which will inform the design of the test suite.
+\item {\bf Testing.} 
+You will describe the test suite and its purpose(s). This section should include the measurements made during the tests. \emph{The analysis of those tests measurements will be done in a separate assignment individually.}
+
+\end{enumerate}
+
+\subsection{Demonstration}
+Each group will present its prototype to the class during the submission day's lab session (March 17).
+Make sure that, by that time, the prototype is working and tested.
+
+%\subsection{Additional characteristics}
+
+\section{Marking criteria}
+
+\begin{itemize}[-, noitemsep, topsep=-0.5em]
+
+	\item[\color{myGray} 15\%] Redesign according to the suggestions.
+
+	\item[\color{myGray} 5\%] Report: redesign process {\color{myGray}[250 words max]}.
+	
+	\item[\color{myGray} 10\%] Graphic design.
+
+	\item[\color{myGray} 50\%] The prototype is coded and working in agreement with the requirements (including the redesign).
+
+	\item[\color{myGray} 10\%] Test design and execution.
+	
+	\item[\color{myGray} 10\%] Report:  testing  {\color{myGray}[500 words max]}.
+
+
+\end{itemize}
+
+
+
+
+\vskip4em
+\begin{center}
+\Large{HAVE FUN}
+\end{center}
+
+
+\end{document}
