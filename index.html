@@ -4,6 +4,7 @@
     <meta charset='UTF-8'>
     <title>A simple Document Management System</title>
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <script src='js/taxanomic.js'></script>
     <script src='js/dms.js'></script>
     <script src='js/ui.js'></script>
     <script src='js/bindings.js'></script>
@@ -14,6 +15,7 @@
     <div id='loggedOut'>
       <select id="userName" name="userName">
         <!-- Restrict the set of users to a hardcoded list -->
+        <option value="jasper">jasper</option>
         <option value="Finn">Finn</option>
         <option value="Jake">Jake</option>
         <option value="Marcelene">Marcelene</option>
@@ -29,15 +31,15 @@
         <button type='button' id='logOutButton'>Log out</button>
       </div>
       <div id='adminPane'>
-        <button type='button' id='resetButton'>Reset</button>
-        <button type='button' id='addDefaultObjectsButton'>Add default documents and tags</button>
+        <button type='button' id='resetButton'>Reset Everything</button>
+        <button type='button' id='addDefaultObjectsButton'>Reload Items</button>
       </div>
-      <div id='documentsPane'>
-        <div id='documentsMenu'>
+      <div id='itemsPane'>
+        <div id='itemsMenu'>
           <button type='button' id='listItemsButton'>List all Items</button>
         </div>
-        <div id='documentsMain'>
-          <div id='listDocumentsPane'></div>
+        <div id='itemsMain'>
+          <div id='listItemsPane'></div>
         </div>
       </div>
       <div id='tagsPane'>

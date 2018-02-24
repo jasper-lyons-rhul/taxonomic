@@ -62,29 +62,31 @@ function dmsObjectList (prefix, infoPaneGenerator, filters, dmsForEach) {
 }
 
 /*******************************************************************************
-    Document management
+    Item management
 *******************************************************************************/
 
-function addDocumentFilterAsData (option, value, element) {
+function addItemFilterAsData (option, value, element) {
   switch (option) {
   case 'name':
-    element.data('filter', function (doc) {
-      return doc.getName().includes(value);
+    element.data('filter', function (item) {
+      return item.name.includes(value);
     });
     break
   case 'owner':
-    element.data('filter', function (doc) {
-      return doc.getOwners().has(value);
+    element.data('filter', function (item) {
+      return Taxanomic.Users.forItem(item)
+        .map(u => u.name).includes(value);
     });
     break;
   case 'tag':
-    element.data('filter', function (doc) {
-      return doc.getTags().has(value);
+    element.data('filter', function (item) {
+      return Taxanomic.Tags.forItem(item)
+        .map(t => t.name).includes(value);
     });
     break;
   case 'date':
-    element.data('filter', function (doc) {
-      return doc.getUploadDate().toDateString().includes(value);
+    element.data('filter', function (item) {
+      return item.createdAt.includes(value);
     });
     break;
   default:
@@ -92,11 +94,10 @@ function addDocumentFilterAsData (option, value, element) {
   }
 }
 
-function generateDocumentFilterItem (pane, filterList) {
+function generateItemFilterItem (pane, filterList) {
   let filterItem = $('<li/>');
   let criterion = $('<select/>')
       .append($('<option/>').text('name'))
-      .append($('<option/>').text('owner'))
       .append($('<option/>').text('tag'))
       .append($('<option/>').text('date'));
   let pattern = $('<input/>', { type: 'text' });
@@ -104,19 +105,19 @@ function generateDocumentFilterItem (pane, filterList) {
     type: 'button',
     text: 'Add filter',
     click: function () {
-      addDocumentFilterAsData(criterion.val(), pattern.val(), filterItem);
+      addItemFilterAsData(criterion.val(), pattern.val(), filterItem);
       addFilterButton.detach();
       filterItem.append(updateFilterButton);
-      filterItem.after(generateDocumentFilterItem(pane, filterList));
-      refreshDocumentList(pane, filterList);
+      filterItem.after(generateItemFilterItem(pane, filterList));
+      refreshItemList(pane, filterList);
     }
   });
   let updateFilterButton = $('<button/>', {
     type: 'button',
     text: 'Update filter',
     click: function () {
-      addDocumentFilterAsData(criterion.val(), pattern.val(), filterItem);
-      refreshDocumentList(pane, filterList);
+      addItemFilterAsData(criterion.val(), pattern.val(), filterItem);
+      refreshItemList(pane, filterList);
     }
   }); 
   filterItem.append(criterion).append(pattern).append(addFilterButton);
@@ -125,95 +126,66 @@ function generateDocumentFilterItem (pane, filterList) {
   return filterItem;
 }
 
-function refreshDocumentList (targetPane, filterList) {
+function refreshItemList (targetPane, filterList) {
+  var filters = compileFiltersFromData(filterList);
+
+  var items = Taxanomic.Items.findAll();
+
+  var itemsList = $('<ul/>')
+    .append(Taxanomic.Items.findAll().map(function (item) {
+      return $('<li/>')
+        .append($('<span/>')
+          .text(item.name)
+          .append(itemInformationPane(item))
+        );
+    }));
+
   targetPane.empty()
-    .append(dmsObjectList('document',
-                          documentInformationPane,
-                          compileFiltersFromData(filterList),
-                          DMS.forEachDocument));
+    .append(itemsList);
 }
 
-function documentInformationPane (doc) {
-  let detailsPane = $('<div/>', { 'class': 'document-details-pane' });
-  let controlPane = $('<div/>', { 'class': 'document-control-pane' });
-  let commentsPane = $('<div/>', { 'class': 'document-comments-pane' });
-  let historyPane = $('<div/>', { 'class': 'document-history-pane' });
+function itemInformationPane (item) {
+  let detailsPane = $('<div/>', { 'class': 'item-details-pane' });
+  let controlPane = $('<div/>', { 'class': 'item-control-pane' });
+  let commentsPane = $('<div/>', { 'class': 'item-comments-pane' });
+  let historyPane = $('<div/>', { 'class': 'item-history-pane' });
 
-  let mainPane = $('<div/>', { 'class': 'document-information-pane' })
+  let mainPane = $('<div/>', { 'class': 'item-information-pane' })
       .append(detailsPane)
       .append(controlPane);
 
   // The details pane **********************************************************
   
-  let details = $('<table/>', { 'class': 'document-details' });
-  addProperty(details, 'File', doc.getFile());
+  let details = $('<table/>', { 'class': 'item-details' });
+  addProperty(details, 'File', item.content);
 
-  let owners = $('<input/>', {
-    type: 'text',
-    readonly: true
-  }).val(doc.ownersToString());
-  addProperty(details, 'Owners', owners);
+  var ownersCSV = Taxanomic.Users.forItem(item)
+    .map(u => u.name).join(', ');
+  addProperty(details, 'Owners', ownersCSV);
   
-  let description = $('<textarea/>', {
-    readonly: true
-  }).val(doc.getDescription());
-  addProperty(details, 'Description', description);
+  addProperty(details, 'Description', item.description);
 
+  var tagsCSV = Taxanomic.Tags.forItem(item)
+    .map(t => t.name).join(', ');
   let tags = $('<input/>', {
     type: 'text',
     readonly: true
-  }).val(doc.tagsToString());
+  }).val(tagsCSV);
   addProperty(details, 'Tags', tags);
 
-  addProperty(details, 'Upload date', doc.getUploadDate().toDateString());
-
-  if (DMS.canEdit(doc)) {
-    var isprivate = $('<input/>', {
-      type: 'checkbox',
-      disabled: true,
-      checked: doc.isPrivate()
-    });
-    addProperty(details, 'Is private', isprivate);
-  }
-  
   detailsPane.append(details);
 
   // The control pane **********************************************************
 
-  if (DMS.canEdit(doc)) {
+  if (Taxanomic.canEditItem(item)) {
     let editPane = $('<span/>').appendTo(controlPane);
-    
-    let updateButton = $('<button/>', {
-      type: 'button',
-      text: 'Update file',
-      click: function () {
-        $('<input/>', {
-          type: 'file',
-          change: function () {
-            if ($(this).val() != doc.getFile()) {
-              alert('The new version of the file should have the same name.');
-            } else {
-              doc.updateFile($(this).val());
-              DMS.updateDocument(doc);
-              if (historyPane.is(':visible'))
-                refreshHistoryPane();
-            }
-          }
-        }).click();
-      }
-    });
-    editPane.append(updateButton);
     
     let editButton = $('<button/>', {
       type: 'button',
       text: 'Edit details',
       click: function () {
-        owners.prop('readonly', false);
-        description.prop('readonly', false);
         tags.prop('readonly', false);
-        isprivate.prop('disabled', false);
-        
-        updateButton.prop('disabled', true);
+
         editButton.detach();
         editPane.append(cancelButton).append(saveButton);
       }
@@ -224,12 +196,10 @@ function documentInformationPane (doc) {
       type: 'button',
       text: 'Cancel',
       click: function () {
-        owners.val(doc.ownersToString()).prop('readonly', true);
-        description.val(doc.getDescription()).prop('readonly', true);
-        tags.val(doc.tagsToString()).prop('readonly', true);
-        isprivate.prop('checked', doc.isPrivate()).prop('disabled', true);
+        var tagsCSV = Taxanomic.Tags.forItem(item)
+          .map(t => t.name).join(', ');
+        tags.val(tagsCSV).prop('readonly', true);
         
-        updateButton.prop('disabled', false);
         cancelButton.detach();
         saveButton.detach();
         editPane.append(editButton);
@@ -240,130 +210,25 @@ function documentInformationPane (doc) {
       type: 'button',
       text: 'Save',
       click: function () {
-        let ownerList = parseCSV(owners.val());
-        if (ownerList.length == 0) {
-          alert('The document-owners group cannot become empty.');
-          return;
-        }
-
         let tagList = parseCSV(tags.val());
         if (tagList.length == 0) {
           alert('You have to specify at least one tag.');
           return;
         }
-        
-        doc.updateOwnersFromList(ownerList)
-          .updateDescription(description.val())
-          .updateTagsFromList(tagList)
-          .makePrivate(isprivate.is(':checked'));
-        DMS.updateDocument(doc);
-        
-        owners.prop('readonly', true);
-        description.prop('readonly', true);
+
+        Taxanomic.Items.setTagsByName(item, tagList);
         tags.prop('readonly', true);
-        isprivate.prop('disabled', true);
 
         if (historyPane.is(':visible'))
           refreshHistoryPane();
 
-        updateButton.prop('disabled', false);
         cancelButton.detach();
         saveButton.detach();
         editPane.append(editButton);
       }
     });
-  } // DMS.canEdit(doc)
+  }
 
-  // The comments pane *********************************************************
-
-  let refreshCommentsPane = function () {
-    commentsPane.empty();
-    
-    let commentList = $('<ol/>', {
-      'class': 'comment-list'
-    });
-    for (let comment of doc.getComments()) {
-      let commentText = $('<div/>', {
-        'class': 'comment-text'
-      }).text(comment.text);
-      let commentInfo = $('<span/>', {
-        'class': 'comment-info'
-      }).text(['by', comment.user,
-               'on', comment.date.toDateString()].join(' '));
-      commentList.append(
-        $('<li/>').append(commentText).append(commentInfo)
-      );
-    }
-    commentsPane.append(commentList);
-    
-    let newComment = $('<textarea/>');
-    let addComment = $('<button/>', {
-      type: 'button',
-      text: 'Add comment',
-      click: function () {
-        if (newComment.val() != '') {
-          doc.addComment(DMS.createComment(newComment.val()));
-          DMS.updateDocument(doc);
-          refreshCommentsPane();
-        }
-      }
-    });
-    commentsPane.append(newComment).append(addComment);
-  };
-  
-  let showCommentsButton = $('<button/>', {
-    type: 'button',
-    text: 'Show comments',
-    click: function () {
-      if (commentsPane.is(':visible')) {
-        showCommentsButton.text('Show comments');
-        commentsPane.detach();
-      } else {
-        showCommentsButton.text('Hide comments');
-        commentsPane.appendTo(mainPane);
-        refreshCommentsPane();
-      }
-    }  
-  });
-  controlPane.append(showCommentsButton);
-  
-  // The history pane **********************************************************
-
-  let refreshHistoryPane = function () {
-    historyPane.empty();
-    let eventList = $('<ul/>', {
-      'class': 'event-list'
-    });
-    for (let event of doc.getHistory()) {
-      let date = $('<div/>', {
-        'class': 'event-date'
-      }).text(event.date.toString());
-      let description = $('<span/>', {
-        'class': 'event-description'
-      }).text(event.description);
-      eventList.append(
-        $('<li/>').append(date).append(description)
-      );
-    }
-    historyPane.append(eventList);
-  };
-  
-  let showHistoryButton = $('<button/>', {
-    type: 'button',
-    text: 'Show history',
-    click: function () {
-      if (historyPane.is(':visible')) {
-        showHistoryButton.text('Show history');
-        historyPane.detach();
-      } else {
-        showHistoryButton.text('Hide history');
-        historyPane.appendTo(mainPane);
-        refreshHistoryPane();
-      }
-    }
-  });
-  controlPane.append(showHistoryButton);
-  
   return mainPane;
 };
 
@@ -377,7 +242,7 @@ function addTagFilterAsData (option, value, element) {
     element.data('filter', function (doc) {
       return doc.getName().includes(value);
     });
-    break
+    break;
   case 'owner':
     element.data('filter', function (doc) {
       return doc.getOwners().has(value);
@@ -426,67 +291,78 @@ let generateTagFilterItem = function (pane, filterList) {
 }
 
 function refreshTagList (targetPane, filterList) {
+  var tagList = $('<ul/>')
+    .append(Taxanomic.Tags.findAll().map(function (tag) {
+      return $('<li/>')
+        .append($('<span/>')
+          .text(tag.name)
+          .append(tagInformationPane(tag))
+        )
+    }));
+
   targetPane.empty()
-    .append(dmsObjectList('tag',
-                          tagInformationPane,
-                          compileFiltersFromData(filterList),
-                          DMS.forEachTag));
+    .append(tagList);
 }
 
 function tagInformationPane (tag) {
   let detailsPane = $('<div/>', { 'class': 'tag-details-pane' });
   let controlPane = $('<div/>', { 'class': 'tag-control-pane' });
   let historyPane = $('<div/>', { 'class': 'tag-history-pane' });
-  
+
   let mainPane = $('<div/>', { 'class': 'tag-information-pane' })
-      .append(detailsPane)
-      .append(controlPane);
-  
+    .append(detailsPane)
+    .append(controlPane);
+
   // The details pane **********************************************************
 
   let details = $('<table/>', { 'class': 'tag-details' });
-  addProperty(details, 'Name', tag.getName());
+  addProperty(details, 'Name', tag.name);
+
+  var ownersCSV = Taxanomic.Users.forTag(tag)
+    .map(u => u.name).join(', ');
 
   let owners = $('<input/>', {
     type: 'text',
     readonly: true
-  }).val(tag.ownersToString());
+  }).val(ownersCSV);
   addProperty(details, 'Owners', owners);
-  
+
   let description = $('<textarea/>', {
     readonly: true
-  }).val(tag.getDescription());
+  }).val(tag.description);
   addProperty(details, 'Description', description);
 
-  addProperty(details, 'Creation date', tag.getCreationDate().toDateString());
+  addProperty(details, 'Creation date', tag.createAt);
 
   detailsPane.append(details);
 
   // The control pane **********************************************************
 
-  if (DMS.canEdit(tag)) {
+  if (Taxanomic.canEditTag(tag)) {
     let editPane = $('<span/>').appendTo(controlPane);
 
     let editButton = $('<button/>', {
       type: 'button',
       text: 'Edit details',
       click: function () {
-                          owners.prop('readonly', false);
-                          description.prop('readonly', false);
-                          
-                          editButton.detach();
-                          editPane.append(cancelButton).append(saveButton);
-                         }
+        owners.prop('readonly', false);
+        description.prop('readonly', false);
+
+        editButton.detach();
+        editPane.append(cancelButton).append(saveButton);
+      }
     });
     editPane.append(editButton);
-    
+
     let cancelButton = $('<button/>', {
       type: 'button',
       text: 'Cancel',
       click: function () {
-        owners.val(tag.ownersToString()).prop('readonly', true);
-        description.val(tag.getDescription()).prop('readonly', true);
-        
+        var ownersCSV = Taxanomic.Users.forTag(tag)
+          .map(u => u.name).join(', ');
+        owners.val(ownersCSV).prop('readonly', true);
+        description.val(tag.description).prop('readonly', true);
+
         cancelButton.detach();
         saveButton.detach();
         editPane.append(editButton);
@@ -499,13 +375,13 @@ function tagInformationPane (tag) {
       click: function () {
         let ownerList = parseCSV(owners.val());
         if (ownerList.length == 0) {
-          alert('The document-owners group cannot become empty.');
+          alert('The item-owners group cannot become empty.');
           return;
         }
+        Taxanomic.Tags.setOwnersByNames(tag, ownerList);
 
-        tag.updateOwnersFromList(ownerList)
-          .updateDescription(description.val());
-        DMS.updateTag(tag);
+        tag.description = description.val();
+        Taxanomic.Tags.update(tag);
 
         owners.prop('readonly', true);
         description.prop('readonly', true);
@@ -516,40 +392,67 @@ function tagInformationPane (tag) {
       }
     });
 
-    let deleteButton = $('<button/>', {
+    let closeButton = $('<button/>', {
       type: 'button',
-      text: 'Delete tag',
+      text: 'Close tag',
       click: function () {
-        DMS.deleteTag(tag, {
-          onerror: function () {
-            alert('There are documents still associated with this tag.');
-          },
-          oncomplete: function () {
-            $('#listTagsButton').click();
-          }
-        });
+        if (Taxanomic.Tags.close(tag)) {
+          reopenButton.show();
+          closeButton.hide();
+        }
       }
     });
-    controlPane.append(deleteButton);
+    controlPane.append(closeButton);
+
+    let reopenButton = $('<button/>', {
+      type: 'button',
+      text: 'Reopen tag',
+      click: function () {
+        if (Taxanomic.Tags.reopen(tag)) {
+          reopenButton.hide();
+          closeButton.show();
+        }
+      }
+    }).hide();
+    controlPane.append(reopenButton);
 
     let mapButton = $('<button/>', {
       type: 'button',
       text: 'Map tag',
       click: function () {
         let newTagName = prompt('To which tag would you like to map \'' +
-                                tag.getName() + '\'?');
-        if (newTagName != null)
-          DMS.mapTag(tag, newTagName, {
-            oncomplete: function () {
-              $('#listTagsButton').click();
-            }
-          });
+          tag.name + '\'?');
+        if (newTagName != null) {
+          if (Taxanomic.Tags.map(tag, { name: newTagName })) {
+            $('#listTagsButton').click();
+          }
+        }
       }
     });
     controlPane.append(mapButton);
   } // DMS.canEdit(tag)
-  
+
   // The history pane **********************************************************
+  let refreshHistoryPane = function () {
+    historyPane.empty();
+    let eventList = $('<ul/>', {
+      'class': 'event-list'
+    });
+
+    Taxanomic.Tags.history(tag).forEach(function (event) {
+      let date = $('<div/>', {
+        'class': 'event-date'
+      }).text(event.createdAt);
+      let description = $('<span/>', {
+        'class': 'event-description'
+      }).text(event.payload);
+      eventList.append(
+        $('<li/>').append(date).append(description)
+      );
+    });
+
+    historyPane.append(eventList);
+  };
 
   let showHistoryButton = $('<button/>', {
     type: 'button',
@@ -560,8 +463,8 @@ function tagInformationPane (tag) {
         historyPane.detach();
       } else {
         showHistoryButton.text('Hide history');
-        historyPane.empty().append(eventList(tag));
         historyPane.appendTo(mainPane);
+        refreshHistoryPane();
       }
     }
   });

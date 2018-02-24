@@ -13,7 +13,7 @@ body {
     float: right;
 }
 
-#documentsPane {
+#itemsPane {
     width: 49%;
     float: left;
 }
@@ -27,17 +27,17 @@ body {
 
 .user-name {}
 
-/* Document management */
+/* Item management */
 
-.document-filter-list {}
+.item-filter-list {}
 
-.document-list-pane {}
+.item-list-pane {}
 
-.document-list-pane li {
+.item-list-pane li {
     padding-top: 20pt;
 }
 
-.document-name {
+.item-name {
     padding: 5px 10px;
     color: white;
     background-color: black;
@@ -47,21 +47,21 @@ body {
     cursor:pointer;
 }
 
-.document-name:hover {
+.item-name:hover {
     background-color: #aaaaaa;
 }
 
-.document-information-pane {}
+.item-information-pane {}
 
-.document-details-pane {}
+.item-details-pane {}
 
-.document-details {}
+.item-details {}
 
-.document-control-pane {}
+.item-control-pane {}
 
-.document-comments-pane {}
+.item-comments-pane {}
 
-.document-history-pane {}
+.item-history-pane {}
 
 /* Tag management */
 
@@ -81,7 +81,7 @@ body {
 
 .tag-history-pane {}
 
-/* Names and values of document/tag properties */
+/* Names and values of item/tag properties */
 
 .property-name {}
 
