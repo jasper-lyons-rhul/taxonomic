@@ -74,13 +74,13 @@ function addItemFilterAsData (option, value, element) {
     break
   case 'owner':
     element.data('filter', function (item) {
-      return Taxanomic.Users.forItem(item)
+      return Taxonomic.Users.forItem(item)
         .map(u => u.name).includes(value);
     });
     break;
   case 'tag':
     element.data('filter', function (item) {
-      return Taxanomic.Tags.forItem(item)
+      return Taxonomic.Tags.forItem(item)
         .map(t => t.name).includes(value);
     });
     break;
@@ -129,10 +129,10 @@ function generateItemFilterItem (pane, filterList) {
 function refreshItemList (targetPane, filterList) {
   var filters = compileFiltersFromData(filterList);
 
-  var items = Taxanomic.Items.findAll();
+  var items = Taxonomic.Items.findAll();
 
   var itemsList = $('<ul/>')
-    .append(Taxanomic.Items.findAll().map(function (item) {
+    .append(Taxonomic.Items.findAll().map(function (item) {
       return $('<li/>')
         .append($('<span/>')
           .text(item.name)
@@ -159,13 +159,13 @@ function itemInformationPane (item) {
   let details = $('<table/>', { 'class': 'item-details' });
   addProperty(details, 'File', item.content);
 
-  var ownersCSV = Taxanomic.Users.forItem(item)
+  var ownersCSV = Taxonomic.Users.forItem(item)
     .map(u => u.name).join(', ');
   addProperty(details, 'Owners', ownersCSV);
   
   addProperty(details, 'Description', item.description);
 
-  var tagsCSV = Taxanomic.Tags.forItem(item)
+  var tagsCSV = Taxonomic.Tags.forItem(item)
     .map(t => t.name).join(', ');
   let tags = $('<input/>', {
     type: 'text',
@@ -177,7 +177,7 @@ function itemInformationPane (item) {
 
   // The control pane **********************************************************
 
-  if (Taxanomic.canEditItem(item)) {
+  if (Taxonomic.canEditItem(item)) {
     let editPane = $('<span/>').appendTo(controlPane);
     
     let editButton = $('<button/>', {
@@ -196,7 +196,7 @@ function itemInformationPane (item) {
       type: 'button',
       text: 'Cancel',
       click: function () {
-        var tagsCSV = Taxanomic.Tags.forItem(item)
+        var tagsCSV = Taxonomic.Tags.forItem(item)
           .map(t => t.name).join(', ');
         tags.val(tagsCSV).prop('readonly', true);
         
@@ -216,7 +216,7 @@ function itemInformationPane (item) {
           return;
         }
 
-        Taxanomic.Items.setTagsByName(item, tagList);
+        Taxonomic.Items.setTagsByNames(item, tagList);
         tags.prop('readonly', true);
 
         if (historyPane.is(':visible'))
@@ -292,7 +292,7 @@ let generateTagFilterItem = function (pane, filterList) {
 
 function refreshTagList (targetPane, filterList) {
   var tagList = $('<ul/>')
-    .append(Taxanomic.Tags.findAll().map(function (tag) {
+    .append(Taxonomic.Tags.findAll().map(function (tag) {
       return $('<li/>')
         .append($('<span/>')
           .text(tag.name)
@@ -318,7 +318,7 @@ function tagInformationPane (tag) {
   let details = $('<table/>', { 'class': 'tag-details' });
   addProperty(details, 'Name', tag.name);
 
-  var ownersCSV = Taxanomic.Users.forTag(tag)
+  var ownersCSV = Taxonomic.Users.forTags(tag)
     .map(u => u.name).join(', ');
 
   let owners = $('<input/>', {
@@ -338,7 +338,7 @@ function tagInformationPane (tag) {
 
   // The control pane **********************************************************
 
-  if (Taxanomic.canEditTag(tag)) {
+  if (Taxonomic.canEditTag(tag)) {
     let editPane = $('<span/>').appendTo(controlPane);
 
     let editButton = $('<button/>', {
@@ -358,7 +358,7 @@ function tagInformationPane (tag) {
       type: 'button',
       text: 'Cancel',
       click: function () {
-        var ownersCSV = Taxanomic.Users.forTag(tag)
+        var ownersCSV = Taxonomic.Users.forTag(tag)
           .map(u => u.name).join(', ');
         owners.val(ownersCSV).prop('readonly', true);
         description.val(tag.description).prop('readonly', true);
@@ -378,10 +378,10 @@ function tagInformationPane (tag) {
           alert('The item-owners group cannot become empty.');
           return;
         }
-        Taxanomic.Tags.setOwnersByNames(tag, ownerList);
+        Taxonomic.Tags.setOwnersByNames(tag, ownerList);
 
         tag.description = description.val();
-        Taxanomic.Tags.update(tag);
+        Taxonomic.Tags.update(tag);
 
         owners.prop('readonly', true);
         description.prop('readonly', true);
@@ -396,7 +396,7 @@ function tagInformationPane (tag) {
       type: 'button',
       text: 'Close tag',
       click: function () {
-        if (Taxanomic.Tags.close(tag)) {
+        if (Taxonomic.Tags.close(tag)) {
           reopenButton.show();
           closeButton.hide();
         }
@@ -408,7 +408,7 @@ function tagInformationPane (tag) {
       type: 'button',
       text: 'Reopen tag',
       click: function () {
-        if (Taxanomic.Tags.reopen(tag)) {
+        if (Taxonomic.Tags.reopen(tag)) {
           reopenButton.hide();
           closeButton.show();
         }
@@ -423,7 +423,7 @@ function tagInformationPane (tag) {
         let newTagName = prompt('To which tag would you like to map \'' +
           tag.name + '\'?');
         if (newTagName != null) {
-          if (Taxanomic.Tags.map(tag, { name: newTagName })) {
+          if (Taxonomic.Tags.map(tag, { name: newTagName })) {
             $('#listTagsButton').click();
           }
         }
@@ -439,7 +439,7 @@ function tagInformationPane (tag) {
       'class': 'event-list'
     });
 
-    Taxanomic.Tags.history(tag).forEach(function (event) {
+    Taxonomic.Tags.history(tag).forEach(function (event) {
       let date = $('<div/>', {
         'class': 'event-date'
       }).text(event.createdAt);

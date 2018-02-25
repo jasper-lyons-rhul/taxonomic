@@ -6,8 +6,8 @@ $(document).ready(function() {
   let loggedOut = $('#loggedOut');
   
   $('#logInButton').click(function () {
-    var user = Taxanomic.Users.findByName($('#userName').val());
-    if (Taxanomic.login(user)) {
+    var user = Taxonomic.Users.findByName($('#userName').val());
+    if (Taxonomic.login(user)) {
       loggedOut.detach();
       $(document.body).append(loggedIn.show());
 
@@ -15,7 +15,7 @@ $(document).ready(function() {
         .append('Logged in as ')
         .append($('<span/>', {
           'class': 'user-name'
-        }).text(Taxanomic.currentUser().name));
+        }).text(Taxonomic.currentUser().name));
       $('#itemsMain').children().empty().hide();
       $('#tagsMain').children().empty().hide();
     } else {
@@ -24,7 +24,7 @@ $(document).ready(function() {
   });
 
   $('#logOutButton').click(function () {
-    Taxanomic.logout();
+    Taxonomic.logout();
     $('#loggedInAs').empty();
 
     loggedIn.detach();
@@ -79,14 +79,14 @@ $(document).ready(function() {
       click: function () {
         let ownerList = parseCSV(additionalOwners.val());
 
-        var tag = Taxanomic.Tags.create({
+        var tag = Taxonomic.Tags.create({
           name: name.val(),
           description: description.val()
         });
 
         ownerList
-          .map(o => Taxanomic.Users.find({name: o}))
-          .map(u => Taxanomic.Users.becomeTagOwner(u, tag));
+          .map(o => Taxonomic.Users.find({name: o}))
+          .map(u => Taxonomic.Users.becomeTagOwner(u, tag));
 
         createTagPane.hide();
         $('#listTagsButton').click();

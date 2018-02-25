@@ -179,7 +179,7 @@ var Taxonomic = (function () {
         Events.createFor(user, `${user.name} disowned ${tag.name}`);
         Events.createFor(tag, `${user.name} disowned ${tag.name}`);
         return true;
-      else {
+      } else {
         return false;
       }
     }
@@ -189,7 +189,7 @@ var Taxonomic = (function () {
     findAll: function (filters) {
       var array = data.items;
 
-      if (filters.tags) {
+      if (filters && filters.tags) {
         array = Items.forTags(filters.tags);
         delete filters.tags
       }
@@ -212,7 +212,7 @@ var Taxonomic = (function () {
       var tagResults = Tags.search(string);
       return Items
         .forTags(tagResults.map(r => r.element))
-        .map(i => { key: 'tag', element: i });
+        .map(i => ({ key: 'tag', element: i }));
     },
     search: function (string) {
       return copy(CRUD.search(data.items, string, ['name', 'description']));
