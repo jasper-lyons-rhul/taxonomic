@@ -1,27 +1,72 @@
 var Taxonomic = (function () {
-
+  // utility functions
   var copy = (object) => JSON.parse(JSON.stringify(object));
   var merge = (...args) => Object.assign.apply(null, args);
   var equal = (a, b) => (a && a.hasOwnProperty('id')) ? a.id === b.id : a === b;
   function unique(array) {
-    return array.reduce(function (seen, element) {
-      if (seen.indexOf(element) < 0)
-        seen.push(element);
-
+    return Object.values(array.reduce(function (seen, element) {
+      if (element)
+        seen[element.id || element] = element;
       return seen;
-    }, []);
+    }, {}));
+  }
+  function intersect(arr1, arr2) {
+    return Object.values(arr1.reduce(function (seen, element) {
+      if (arr1.filter(equal.bind(null,  element)).length > 0)
+        seen[element.id || element] = element;
+      return seen;
+    }, {}));
   }
 
-  var data = {
-    users: [],
-    currentUser: null,
-    items: [],
-    tags: [],
-    events: [],
-    taggedItems: [],
-    ownedTags: []
-  };
+  // Persisting data to the browser's local storage
+  function save() {
+    localStorage.setItem('taxonomic', JSON.stringify(data));
+  }
+  function load() {
+    return JSON.parse(localStorage.getItem('taxonomic'));
+  }
+  function reset() {
+    localStorage.removeItem('taxonomic');
+    window.location.reload();
+  }
+  function initialize() {
+    CRUD.create(data.users, { name: 'jasper' });
+    CRUD.create(data.users, { name: 'carlos' });
+    var jasper = API.Users.findAll()[0];
+    API.login(jasper);
+    var testItem1  = CRUD.create(data.items, {
+      name: 'test1',
+      content: 'This is a test',
+      description: 'This was merely test 001'
+    });
+    var testItem2  = CRUD.create(data.items, {
+      name: 'test2',
+      content: 'This is a test',
+      description: 'This was merely test 002'
+    });
+    var testTag1 = API.Tags.create({ name: 'test1', description: '000' });
+    var testTag2 = API.Tags.create({ name: 'test2', description: '001' });
+    API.Tags.attach(testTag1, testItem1);
+    API.Tags.attach(testTag2, testItem1);
+    API.Tags.attach(testTag2, testItem2);
+    API.logout();
+  }
 
+  // the main data store
+  var data = load() || (function () {
+    setTimeout(initialize);
+    return {
+      users: [],
+      currentUser: null,
+      items: [],
+      tags: [],
+      events: [],
+      taggedItems: [],
+      ownedTags: []
+    };
+  })()
+
+  // Create, Read, Update, Delete and Search for POJOs in arrays
   var CRUD = {
     idCounter: 0,
     create: function (array, template, unique) {
@@ -40,6 +85,8 @@ var Taxonomic = (function () {
         id: CRUD.idCounter++
       });
       array.push(object);
+
+      save();
       return object;
     },
     update: function (array, id, object) {
@@ -49,6 +96,7 @@ var Taxonomic = (function () {
 
       merge(original, object);
 
+      save();
       return original;
     },
     read: function (array, filters) {
@@ -69,6 +117,7 @@ var Taxonomic = (function () {
       if (index < 0)
         throw "Can't find element in array"
 
+      save();
       return array.splice(index, 1);
     },
     search: function (array, string, keys) {
@@ -92,6 +141,7 @@ var Taxonomic = (function () {
     }
   }
 
+  // Manage event objects
   var Events = {
     findAll: function (filters) {
       return copy(CRUD.read(data.events, filters));
@@ -117,6 +167,7 @@ var Taxonomic = (function () {
     }
   }
 
+  // Manage user objects
   var Users = {
     findAll: function (filters) {
       return copy(CRUD.read(data.users, filters));
@@ -131,11 +182,12 @@ var Taxonomic = (function () {
       if (!tags.hasOwnProperty('length'))
         tags = [tags];
 
-      var ownedTags = tags
+      var owners = tags
         .map(t => CRUD.read(data.ownedTags, { tagId: t.id }))
-        .reduce([].concat.bind([]));
+        .map(ots => ots.map(ot => Users.find(ot.userId)))
+        .reduce(intersect)
 
-      return unique(ownedTags.map(ot => Users.find(ot.userId)));
+      return unique(owners);
     },
     forItem: function (item) {
       var itemTags = Tags.forItem(item);
@@ -185,6 +237,7 @@ var Taxonomic = (function () {
     }
   };
 
+  // Manage Item objects
   var Items = {
     findAll: function (filters) {
       var array = data.items;
@@ -202,11 +255,12 @@ var Taxonomic = (function () {
       if (!tags.hasOwnProperty('length'))
         tags = [tags];
 
-      var taggedItems = tags
+      var items = tags
         .map(t => CRUD.read(data.taggedItems, { tagId: t.id }))
-        .reduce([].concat.bind([]));
-        
-      return unique(taggedItems.map(ti => Items.find(ti.itemId)));
+        .map(tis => tis.map(ti => Items.find(ti.itemId)))
+        .reduce(intersect)
+
+      return unique(items);
     },
     searchByTag: function (string) {
       var tagResults = Tags.search(string);
@@ -246,8 +300,12 @@ var Taxonomic = (function () {
     }
   };
 
+  // Manage tag objects
   var Tags = {
     create: function (object) {
+      if (!API.currentUser())
+        return console.error("Can't create a tag without a current user");
+
       var newTag = CRUD.create(data.tags, merge({
         name: '',
         description: '',
@@ -256,13 +314,12 @@ var Taxonomic = (function () {
         open: true
       }, object), ['name']);
 
-      if (newTag) {
-        Events.createFor(newTag, `Created new tag ${object.name}`);
-        Users.becomeTagOwner(API.currentUser(), newTag);
-        return copy(newTag);
-      } else {
+      if (!newTag)
         return false;
-      }
+
+      Events.createFor(newTag, `Created new tag ${object.name}`);
+      Users.becomeTagOwner(API.currentUser(), newTag);
+      return copy(newTag);
     },
     findAll: function (filters) {
       return copy(CRUD.read(data.tags, filters));
@@ -303,6 +360,9 @@ var Taxonomic = (function () {
       }).length > 0;
     },
     attach: function (tag, item) {
+      if (item.hasOwnProperty('length'))
+        return item.map(i => Tags.attach(tag, i));
+
       if (!tag.open)
         return console.error("Can't attach a tag that is closed");
 
@@ -326,6 +386,9 @@ var Taxonomic = (function () {
       }
     },
     detach: function (tag, item) {
+      if (item.hasOwnProperty('length'))
+        return item.map(i => Tags.detach(tag, i));
+
       if (!Tags.find(tag.id))
         return console.error("Can't detach tag that doesn't exist");
 
@@ -429,12 +492,12 @@ var Taxonomic = (function () {
       // remove the parent tag from the co-tags list
       delete cotags[tag.name];
 
-      return cotags;
+      return Object.values(cotags);
     }
   };
 
+
   var API = {
-    Users: Users,
     currentUser: function () {
       return copy(data.currentUser);
     },
@@ -458,23 +521,12 @@ var Taxonomic = (function () {
     canEditTag: function (tag) {
       return Users.owns(API.currentUser(), tag).length > 0;
     },
+    reset: reset,
+    initialize: initialize,
+    Users: Users,
     Items: Items,
     Tags: Tags
   };
-
-  // setup test data
-  CRUD.create(data.users, { name: 'jasper' });
-  CRUD.create(data.users, { name: 'carlos' });
-  var jasper = API.Users.findAll()[0];
-  API.login(jasper);
-  var testItem  = CRUD.create(data.items, {
-    name: 'test',
-    content: 'This is a test',
-    description: 'This was merely a test'
-  });
-  var testTag = API.Tags.create({ name: 'test' });
-  API.Tags.attach(testTag, testItem);
-  API.logout();
   
   return API;
 })();

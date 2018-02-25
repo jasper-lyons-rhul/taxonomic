@@ -182,13 +182,13 @@ It will return any `tag` objects with attributes that contain the text in the se
 
 `attached` takes a `tag` and `item` object and checks to see if the tag is attached to the item. If it is it returns `true` else it returns `false`. If either the `tag` or the `item` do not exist it will return `undefined` and will register an error in the developer tools command line.
 
-#### Tags.attach(tag, item)
+#### Tags.attach(tag, items)
 
-`attach` takes a `tag` and `item` object and attempts to attach the tag to the item. If it is successful the `tag` object is returned else `false` is returned.
+`attach` takes a `tag` and `item` or list of `item` objects and attempts to attach the tag to the items. If it is successful the `tag` object is returned else `false` is returned. If an error occurred then `undefined` will be returned and an error will be registered in the developer tools command line. If multiple items are passed then an array of `[tag, false, undefined ...]` is returned and errors are reported to the cli.
 
 #### Tags.detach(tag, item)
 
-`detach` takes a `tag` and `item` object and attempts to detach the tag from the item. If it is successful it will return the `tag` else it will return `false`. If an error occurred then `undefined` will be returned and an error will be registered in the developer tools command line.
+`detach` takes a `tag` and `item` or list of `item` objects and attempts to detach the tag from the items. If it is successful it will return the `tag` else it will return `false`. If an error occurred then `undefined` will be returned and an error will be registered in the developer tools command line. If multiple items are passed then an array of `[tag, false, undefined ...]` will be retruned and any errors will be registered on the cli.
 
 #### Tags.close(tag)
 
