@@ -298,6 +298,20 @@ class Tag extends DMSObject {
     return this;
   }
 
+  close() {
+    if (this.open)
+      this.open = false;
+
+    return this;
+  }
+
+  reopen() {
+    if (!this.open)
+      this.open = true;
+
+    return this;
+  }
+
   getCreationDate() {
     return this.date;
   }

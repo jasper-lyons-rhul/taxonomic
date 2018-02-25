@@ -100,7 +100,8 @@ var Taxonomic = (function () {
       var event = merge({
         subjectId: null,
         payload: '',
-        createdAt: (new Date).toString()
+        createdAt: (new Date).toString(),
+        creator: API.currentUser()
       }, object);
 
       if (event.subjectId === null)
@@ -160,10 +161,13 @@ var Taxonomic = (function () {
         tagId: tag.id
       }, ['userId', 'tagId']);
 
-      Events.createFor(user, `${user.name} became owner of ${tag.name}`);
-      Events.createFor(tag, `${user.name} became owner of ${tag.name}`);
-
-      return tag;
+      if (ownedTag) {
+        Events.createFor(user, `${user.name} became owner of ${tag.name}`);
+        Events.createFor(tag, `${user.name} became owner of ${tag.name}`);
+        return true;
+      } else {
+        return false;
+      }
     },
     disownTag: function (user, tag) {
       var ownedTag = CRUD.read(data.ownedTags, {
@@ -171,11 +175,13 @@ var Taxonomic = (function () {
         tagId: tag.id
       })[0];
 
-      CRUD.delete(data.ownedTags, ownedTag.id);
-
-      Events.createFor(user, `${user.name} disowned ${tag.name}`);
-      Events.createFor(tag, `${user.name} disowned ${tag.name}`);
-      return tag;
+      if (CRUD.delete(data.ownedTags, ownedTag.id)) {
+        Events.createFor(user, `${user.name} disowned ${tag.name}`);
+        Events.createFor(tag, `${user.name} disowned ${tag.name}`);
+        return true;
+      else {
+        return false;
+      }
     }
   };
 
@@ -221,7 +227,7 @@ var Taxonomic = (function () {
       delete item.id;
       return copy(CRUD.update(data.items, id, item));
     },
-    setTagsByName: function (item, tagNames) {
+    setTagsByNames: function (item, tagNames) {
       var newTags = tagNames
         .map(n => Tags.findAll({ name: n })[0] || Tags.create({ name: n }));
       var currentTags = Tags.forItem(item);
@@ -314,9 +320,10 @@ var Taxonomic = (function () {
       if (taggedItem) {
         Events.createFor(tag, `Attached ${tag.name} to ${item.name}`);
         Events.createFor(item, `Attached ${tag.name} to ${item.name}`);
+        return tag;
+      } else {
+        return false;
       }
-
-      return tag;
     },
     detach: function (tag, item) {
       if (!Tags.find(tag.id))
@@ -333,11 +340,13 @@ var Taxonomic = (function () {
       if (!taggedItem)
         return console.error(`${item.name} has no tag ${tag.name}`);
 
-      CRUD.delete(data.taggedItems, taggedItem.id);
-
-      Events.createFor(tag, `Detached ${tag.name} from ${item.name}`);
-      Events.createFor(item, `Detached ${tag.name} from ${item.name}`);
-      return tag;
+      if (CRUD.delete(data.taggedItems, taggedItem.id)) {
+        Events.createFor(tag, `Detached ${tag.name} from ${item.name}`);
+        Events.createFor(item, `Detached ${tag.name} from ${item.name}`);
+        return tag;
+      } else {
+        return false;
+      }
     },
     close: function (tag) {
       if (!tag.open)
