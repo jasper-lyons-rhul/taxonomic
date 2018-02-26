@@ -7,9 +7,10 @@ test("Create a tag", function (assert) {
 });
 
 module("Logged In", {
-  beforeEach: function () {
+  beforeEach: async function () {
     var user = Users.findAll()[0];
     Taxonomic.login(user);
+    await Taxonomic.loadItems();
   },
   afterEach: function () {
     Taxonomic.reset();
@@ -134,7 +135,7 @@ test('Get all cotags for a tag', function (assert) {
   var cotags = Tags.cotags(tag);
   assert.equal(cotags.length, itemTags.length);
   // there should be only one of each tag
-  assert.deepEqual(cotags.map(ct => ct.count), [1, 1]);
+  assert.deepEqual(cotags.map(ct => ct.count), itemTags.map(it => 1));
 });
 
 test('Sort tags by date', function (assert) {
@@ -222,9 +223,8 @@ test('Search tags by name', function (assert) {
 });
 
 test('Search tags by description', function (assert) {
-  var tag = Tags.findAll()[0];
-  var searchTerm = tag.description.substr(tag.description.length - 3);
-  var results = Tags.search(searchTerm);
+  var tag = Tags.create({ name: 'tag', description: '1234' });
+  var results = Tags.search('1234');
 
   assert.equal(results[0].key, 'description');
   assert.deepEqual(results[0].element, tag);

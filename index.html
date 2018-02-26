@@ -2,10 +2,9 @@
 <html>
   <head>
     <meta charset='UTF-8'>
-    <title>A simple Document Management System</title>
+    <title>Taxonomic</title>
     <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
     <script src='js/taxonomic.js'></script>
-    <script src='js/dms.js'></script>
     <script src='js/ui.js'></script>
     <script src='js/bindings.js'></script>
     <script src='js/config.js'></script>
@@ -14,14 +13,6 @@
   <body>
     <div id='loggedOut'>
       <select id="userName" name="userName">
-        <!-- Restrict the set of users to a hardcoded list -->
-        <option value="jasper">jasper</option>
-        <option value="Finn">Finn</option>
-        <option value="Jake">Jake</option>
-        <option value="Marcelene">Marcelene</option>
-        <option value="Princess Bubble Gum">Princess Bubble Gum</option>
-        <option value="Lemon Grab">Lemon Grab</option>
-        <option value="Ice King">Ice King</option>
       </select>
       <button type='button' id='logInButton'>Log in</button>
     </div>
@@ -39,6 +30,11 @@
           <button type='button' id='listItemsButton'>List all Items</button>
         </div>
         <div id='itemsMain'>
+          <div id="filterItemsPane">
+            <div>
+              Search Items: <input type="search" id="itemSearch">
+            </div>
+          </div>
           <div id='listItemsPane'></div>
         </div>
       </div>
@@ -48,6 +44,9 @@
           <button type='button' id='listTagsButton'>List all tags</button>
         </div>
         <div id='tagsMain'>
+            <label for="tagSearch">
+              Search Tags: <input type="search" id="tagSearch">
+            </label>
           <div id='createTagPane'></div>
           <div id='listTagsPane'></div>
         </div>

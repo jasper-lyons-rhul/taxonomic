@@ -126,13 +126,19 @@ function generateItemFilterItem (pane, filterList) {
   return filterItem;
 }
 
-function refreshItemList (targetPane, filterList) {
-  var filters = compileFiltersFromData(filterList);
+function refreshItemList (targetPane) {
+  const { Tags, Items } = Taxonomic;
 
-  var items = Taxonomic.Items.findAll();
+  var itemResults = Items.search($('#itemSearch').val());
+  var itemTagResults = Items.searchByTag($('#itemSearch').val());
+
+  var items = Utils.union(
+    itemResults.map(r => r.element),
+    itemTagResults.map(r => r.element)
+  );
 
   var itemsList = $('<ul/>')
-    .append(Taxonomic.Items.findAll().map(function (item) {
+    .append(items.map(function (item) {
       return $('<li/>')
         .append($('<span/>')
           .text(item.name)
@@ -141,7 +147,28 @@ function refreshItemList (targetPane, filterList) {
     }));
 
   targetPane.empty()
-    .append(itemsList);
+    .append($('<h3/>').text('Items'))
+    .append(itemsList)
+  
+  // only append cotags if there is a search term.
+  if ($('#itemSearch').val()) {
+    var cotags = Tags.search($('#itemSearch').val())
+      .map(r => Tags.cotags(r.element))
+      .reduce(Utils.concat, [])
+      .sort((a, b) => b.count - a.count);
+
+    var coTagsList = $('<ul/>')
+      .append(cotags.map(function(cotag) {
+        return $('<li/>')
+          .append($('<span/>')
+            .text(cotag.tag.name));
+      }));
+
+
+    targetPane
+      .append($('<h3/>').text('Co-Tags'))
+      .append(coTagsList);
+  }
 }
 
 function itemInformationPane (item) {
@@ -157,7 +184,7 @@ function itemInformationPane (item) {
   // The details pane **********************************************************
   
   let details = $('<table/>', { 'class': 'item-details' });
-  addProperty(details, 'File', item.content);
+  addProperty(details, 'Content', item.content);
 
   var ownersCSV = Taxonomic.Users.forItem(item)
     .map(u => u.name).join(', ');
@@ -210,7 +237,7 @@ function itemInformationPane (item) {
       type: 'button',
       text: 'Save',
       click: function () {
-        let tagList = parseCSV(tags.val());
+        let tagList = Utils.parseCSV(tags.val());
         if (tagList.length == 0) {
           alert('You have to specify at least one tag.');
           return;
@@ -290,9 +317,13 @@ let generateTagFilterItem = function (pane, filterList) {
   return filterItem;
 }
 
-function refreshTagList (targetPane, filterList) {
+function refreshTagList (targetPane) {
+  const { Tags } = Taxonomic;
+
+  var tags = Tags.search($('#tagSearch').val()).map(r => r.element);
+
   var tagList = $('<ul/>')
-    .append(Taxonomic.Tags.findAll().map(function (tag) {
+    .append(tags.map(function (tag) {
       return $('<li/>')
         .append($('<span/>')
           .text(tag.name)
@@ -301,6 +332,7 @@ function refreshTagList (targetPane, filterList) {
     }));
 
   targetPane.empty()
+    .append($('<h3/>').text('Tags'))
     .append(tagList);
 }
 
@@ -373,7 +405,7 @@ function tagInformationPane (tag) {
       type: 'button',
       text: 'Save',
       click: function () {
-        let ownerList = parseCSV(owners.val());
+        let ownerList = Utils.parseCSV(owners.val());
         if (ownerList.length == 0) {
           alert('The item-owners group cannot become empty.');
           return;

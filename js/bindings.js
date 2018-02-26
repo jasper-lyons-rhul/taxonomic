@@ -1,12 +1,22 @@
 $(document).ready(function() {
+  const { Users } = Taxonomic;
   
   // User management ***********************************************************
 
   let loggedIn = $('#loggedIn');
   let loggedOut = $('#loggedOut');
+
+  let userNameOptions = Users.findAll()
+    .map(function (user) {
+      return $('<option/>')
+        .text(user.name)
+        .val(user.id);
+    });
+  $('#userName').empty()
+    .append(userNameOptions);
   
   $('#logInButton').click(function () {
-    var user = Taxonomic.Users.findByName($('#userName').val());
+    var user = Users.find(parseInt($('#userName').val(), 10));
     if (Taxonomic.login(user)) {
       loggedOut.detach();
       $(document.body).append(loggedIn.show());
@@ -16,8 +26,6 @@ $(document).ready(function() {
         .append($('<span/>', {
           'class': 'user-name'
         }).text(Taxonomic.currentUser().name));
-      $('#itemsMain').children().empty().hide();
-      $('#tagsMain').children().empty().hide();
     } else {
       alert("Unable to log in.");
     }
@@ -34,26 +42,30 @@ $(document).ready(function() {
   // Admin *********************************************************************
   
   $('#resetButton').click(function () {
-    DMS.clearStores();
-    $('#itemsMain').children().empty();
-    $('#tagsMain').children().empty();
+    Taxonomic.reset();
+    window.location.reload();
   });
+  $('#addDefaultObjectsButton').click(Taxonomic.loadItems);
 
   // Item management *******************************************************
 
   $('#listItemsButton').click(function () {
     let listItemsPane = $('#listItemsPane');
-    listItemsPane.empty().show().siblings().hide();
+    listItemsPane.empty().show();
 
-    let filterList = $('<ol/>', {
-      'class': 'item-filter-list'
-    }).appendTo(listItemsPane);
     let itemListPane = $('<div/>', {
       'class': 'item-list-pane'
     }).appendTo(listItemsPane);
 
-    filterList.append(generateItemFilterItem(itemListPane, filterList));
-    refreshItemList(itemListPane, filterList);
+    refreshItemList(itemListPane);
+  });
+
+  $('#itemSearch').keyup(function () {
+    $('#listItemsButton').click();
+  });
+
+  $('#itemNameFilter').change(function () {
+    $('#listItemsButton').click();
   });
   
   // Tag management ************************************************************
@@ -77,7 +89,7 @@ $(document).ready(function() {
       type: 'button',
       text: 'Create tag',
       click: function () {
-        let ownerList = parseCSV(additionalOwners.val());
+        let ownerList = Utils.parseCSV(additionalOwners.val());
 
         var tag = Taxonomic.Tags.create({
           name: name.val(),
@@ -98,17 +110,16 @@ $(document).ready(function() {
 
   $('#listTagsButton').click(function () {
     let listTagsPane = $('#listTagsPane');
-    listTagsPane.empty().show().siblings().hide();
+    listTagsPane.empty().show();
 
-    let filterList = $('<ol/>', {
-      'class': 'tag-filter-list'
-    }).appendTo(listTagsPane);
     let tagListPane = $('<div/>', {
       'class': 'tag-list-pane'
     }).appendTo(listTagsPane);
 
-    filterList.append(generateTagFilterItem(tagListPane, filterList));
-    refreshTagList(tagListPane, filterList);
+    refreshTagList(tagListPane);
   });
 
+  $('#tagSearch').keyup(function () {
+    $('#listTagsButton').click();
+  });
 });
