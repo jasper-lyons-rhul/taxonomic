@@ -565,6 +565,8 @@ var Taxonomic = (function () {
     Items: Items,
     Tags: Tags
   };
+
+  API.reset();
   
   return API;
 })();
