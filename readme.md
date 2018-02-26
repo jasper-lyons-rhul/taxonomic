@@ -3,7 +3,7 @@
 The Taxonomic API provides an interface for the Taxonomic application. There 4
  modules in the API:
 
-## Taxonomic
+## Taxonomic
 
 This module is accessible via a global `Taxonomic` variable and provides access to submodules and highlevel methods for manipulating the currently active user. It has 5 methods and 3 submodules.
 
@@ -31,7 +31,7 @@ This method takes an `item` object and checks to see if any of the item's tags a
 
 This method takes a `tag` object and checks to see if the tag is owned by the `currentUser`. If it is it returns `true` else it returns `false`.
 
-### Submodules
+### Submodules
 
 The submodules provide methods to manipulate and query the three types of object in the system: `user`, `item` and `tag`. Each type of object has it's respective module each of which are described below.
 
@@ -61,7 +61,7 @@ There are 5 hardcoded users and you can only log into the system with one of the
 
 There are 8 methods for the `Taxonomic.Users` module:
 
-#### Users.findAll(filters)
+#### Users.findAll(filters)
 
 `findAll` takes a POJO of filters which it will attempt to match exactly from the set of users available e.g.
 
@@ -86,31 +86,31 @@ Users.findAll({ name: 'Fin' });
 
 Will return an empty array `[]`.
 
-#### Users.find(id)
+#### Users.find(id)
 
 `find` takes an id number and will return the `user` with the matching id or `undefined`.
 
-#### Users.findByName(name) 
+#### Users.findByName(name) 
 
 `findByName` takes a name string and will return the `user` with the matching name or `undefined`.
 
-#### Users.forTags(tags)
+#### Users.forTags(tags)
 
 `forTags` takes a list of `tag` objects and will return the set of `user` objects that make up the owners of the tags.
 
-#### Users.forItem(item)
+#### Users.forItem(item)
 
 `forItem` takes a single item object and will return the set of `user` objects that make up the owners of the tags attached to the item.
 
-#### Users.owns(user, tags) 
+#### Users.owns(user, tags) 
 
 `owns` takes a `user` object and a list of `tag` objects. It will return all of the `tag` objects that the `user` owns.
 
-#### Users.becomeTagOwner(user, tag)
+#### Users.becomeTagOwner(user, tag)
 
 `becomeTagOwner` takes a `user` and a `tag` object and will create an ownership relationship in the system between the user and the tag. It will then return `true` if building the relationship was successful and `false` if not.
 
-#### Users.disownTag(user, tag)
+#### Users.disownTag(user, tag)
 
 `disownTag` takes a `user` and a `tag` object and attempts to remove the ownship relationship between the user and the tag. It will then return `true` if removing the relationship was successful and `false` if not.
 
@@ -246,7 +246,7 @@ This can be used to see all of the actions that have been taken relating to a ta
 
 You can use it to discover cotags to a particular tag and rank them by how often they appear together.
 
-### Taxonomic.Items
+### Taxonomic.Items
 
 `Taxonomic.Items` provides methods for manipulating and querying `item` objects. Again, `item` objects are just POJOs and they look like:
 
