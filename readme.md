@@ -244,6 +244,18 @@ This can be used to see all of the actions that have been taken relating to a ta
 }
 ```
 
+#### Tags.flag(tag)
+
+`flag` takes a `tag` object and creates an event indicating that the `tag` has been flagged. This event will appear in the history but the `tag` object will not contain any attributes that will indicate that it is flagged in anyway.
+
+#### Tags.isFlagged(tag)
+
+`isFlagged` takes a `tag` object and checks to see if `tag` is flagged based on it's history of flagging of unflagging events. If the last event was a flag event then it will return `true`, if the last event was an unflag event then it will return `false`.
+
+#### Tags.unflag(tag)
+
+`unflag` takes a `tag` object and, if it has already been flagged, it creates an event indicating that the `tag` has been unflagged. This event will appear in the history bu the `tag` object will not contain any attributes that will indicate that is unflagged in anyway.
+
 You can use it to discover cotags to a particular tag and rank them by how often they appear together.
 
 ### Taxonomic.Items

@@ -139,8 +139,13 @@ test('Get all cotags for a tag', function (assert) {
 });
 
 test('Sort tags by date', function (assert) {
-  var tag1 = Tags.create({ name: 'tag1', createdAt: '2020/01/01' });
-  var tag2 = Tags.create({ name: 'tag2', createdAt: '2019/01/01' });
+  // fixed dates will always fail at some point in the future.
+  var today = new Date();
+  var tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  var tag1 = Tags.create({ name: 'tag1', createdAt: tomorrow});
+  var tag2 = Tags.create({ name: 'tag2', createdAt: today });
 
   var sorted = Tags.findAll().sort(function (a, b) {
     return Date.parse(b.createdAt) - Date.parse(a.createdAt);
@@ -228,4 +233,14 @@ test('Search tags by description', function (assert) {
 
   assert.equal(results[0].key, 'description');
   assert.deepEqual(results[0].element, tag);
+});
+
+test('Flagging a tag', function (assert) {
+  var tag = Tags.create({ name: 'test', description: 'this is a test' });
+
+  Tags.flag(tag);
+  assert.ok(Tags.isFlagged(tag));
+
+  Tags.unflag(tag);
+  assert.notOk(Tags.isFlagged(tag));
 });

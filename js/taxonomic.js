@@ -531,6 +531,46 @@ var Taxonomic = (function () {
       delete cotags[tag.name];
 
       return Object.values(cotags);
+    },
+    flag: function (tag) {
+      tag = Tags.find(tag.id);
+      if (!tag)
+        return console.error("Trying to flag a tag that doesn't exist");
+
+      Events.create({
+        subjectId: tag.id,
+        payload: `Flagged tag ${tag.name}`,
+        flagged: true
+      });
+    },
+    isFlagged: function (tag) {
+      tag = Tags.find(tag.id);
+      if (!tag)
+        throw "Cannot check a tag that doesn't exists is flagged"
+
+      return Events
+        .findAll({ subjectId: tag.id })
+        .reduce(function (flagged, ev) {
+          if (ev.hasOwnProperty('flagged')) {
+            return ev.flagged;
+          } else {
+            return flagged;
+          }
+        }, false);
+    },
+    unflag: function (tag) {
+      tag = Tags.find(tag.id);
+      if (!tag)
+        return console.error("Trying to deflag a tag that doesn't exist");
+
+      if (!Tags.isFlagged(tag))
+        return console.error("Can't unflag a tag that isn't falgged");
+
+      Events.create({
+        subjectId: tag.id,
+        payload: `Deflagged tag ${tag.name}`,
+        flagged: false
+      });
     }
   };
 
