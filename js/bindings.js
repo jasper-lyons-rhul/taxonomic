@@ -97,7 +97,7 @@ $(document).ready(function() {
         });
 
         ownerList
-          .map(o => Taxonomic.Users.find({name: o}))
+          .map(o => Taxonomic.Users.findAll({name: o})[0])
           .map(u => Taxonomic.Users.becomeTagOwner(u, tag));
 
         createTagPane.hide();
