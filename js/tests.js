@@ -86,14 +86,17 @@ test('Reopen a tag', function (assert) {
 });
 
 test('Map a tag to another tag', function (assert) {
-  var currentTags = Tags.findAll()[0];
-  var newTag = Tags.create({ name: 'tag'});
+  var currentTag = Tags.findAll()[0];
+  var item = Items.findAll()[3];
+  Tags.attach(currentTag, item);
 
-  assert.ok(Tags.map(currentTags, newTag));
+  var newTag = Tags.create({ name: 'tag' });
+
+  assert.ok(Tags.map(currentTag, newTag));
 });
 
 test('Map a set of tags to another tag', function (assert) {
-  var currentTags = Tags.findAll()[0];
+  var currentTags = Tags.findAll();
   var newTag = Tags.create({ name: 'tag'});
 
   assert.ok(Tags.map(currentTags, newTag));

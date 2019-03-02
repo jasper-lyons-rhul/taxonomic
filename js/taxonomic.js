@@ -407,6 +407,9 @@ var Taxonomic = (function () {
       if (!Items.find(item.id))
         return console.error("Can't attach tag to item that doesn't exist");
 
+      if (Tags.attached(tag, item))
+        return console.error(`${item.name} is already tagged with ${tag.name}`);
+
       var taggedItem = CRUD.create(data.taggedItems, {
         tagId: tag.id,
         itemId: item.id
@@ -477,8 +480,8 @@ var Taxonomic = (function () {
         items.map(Tags.detach.bind(null, tag))
         return items;
       }).reduce(concat, []);
-      
-      items.map(Tags.attach.bind(null, newTag));
+
+      unique(items).forEach(Tags.attach.bind(null, newTag));
 
       tags.forEach(function (tag) {
         Events.createFor(tag, `Mapped ${tag.name} to ${newTag.name}`);
